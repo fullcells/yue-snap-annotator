@@ -1,0 +1,43 @@
+import { spellTokens } from '../spelling/spelling';
+import { regroupYueTokens } from '../tokenization/regroups';
+import { tokenize } from '../tokenization/static-tokenizer';
+import {
+	annotateCantoneseTokenGlosses,
+	type CantoneseTokenGloss,
+} from '../treatments/deterministic';
+import {
+	applyYueSBWordsGlosses,
+	getSnapshotYueSBWords,
+} from '../snapshot/yue-sb-words';
+import type { AnnotatedToken, SBWordRow2 } from '../types';
+
+export type YueAnnotateOptions = {
+	latestSBWords?: SBWordRow2[];
+};
+
+function asCantoneseTokenGlosses(tokens: AnnotatedToken[]): CantoneseTokenGloss[] {
+	return tokens.map(token => ({
+		token: token.text,
+		gloss: token.gloss ?? '',
+		mtype: token.isWord ? 'BASE' : 'N/A',
+	}));
+}
+
+/** Performs complete local Cantonese annotation. */
+export async function annotate(text: string, options: YueAnnotateOptions = {}): Promise<AnnotatedToken[]> {
+	if (!text) return [];
+
+	const yueSBWords = options.latestSBWords ?? await getSnapshotYueSBWords();
+	let tokens = regroupYueTokens(tokenize(text));
+	tokens = applyYueSBWordsGlosses(tokens, yueSBWords);
+	tokens = annotateCantoneseTokenGlosses(asCantoneseTokenGlosses(tokens), text);
+	// Retokenization can expose dictionary words that were not lookup candidates
+	// before deterministic splitting, so fill remaining gaps once more.
+	tokens = applyYueSBWordsGlosses(tokens, yueSBWords);
+	return spellTokens(tokens);
+}
+
+/** Tokenizes and adds Jyutping without applying bundled glosses. */
+export function tokenizeAndSpell(text: string): AnnotatedToken[] {
+	return spellTokens(regroupYueTokens(tokenize(text)));
+}

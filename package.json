@@ -1,0 +1,43 @@
+{
+  "name": "yue-snap-annotator",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Offline-first, snapshot-based Cantonese annotation for TypeScript and JavaScript.",
+  "license": "CC-BY-NC-SA-4.0",
+  "main": "dist/index.js",
+  "types": "types/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./types/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.json",
+    "types",
+    "README.md",
+    "LICENSE.md",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "scripts": {
+    "snapshot:update": "node --env-file-if-exists=.env scripts/export-yue-sb-words.mjs",
+    "snapshot:update:if-configured": "node scripts/export-yue-sb-words.mjs --if-configured",
+    "prebuild": "npm run snapshot:update:if-configured",
+    "build": "tsc -p tsconfig.json",
+    "prepare": "npm run build",
+    "dev": "tsc -p tsconfig.json --watch",
+    "test": "npm run build && node --test test/*.test.cjs"
+  },
+  "dependencies": {
+    "to-jyutping": "3.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.11",
+    "typescript": "^5.8.2"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
