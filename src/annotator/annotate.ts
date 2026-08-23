@@ -23,7 +23,18 @@ function asCantoneseTokenGlosses(tokens: AnnotatedToken[]): CantoneseTokenGloss[
 	}));
 }
 
-/** Performs complete local Cantonese annotation. */
+function simplifyLocalGlosses(tokens: AnnotatedToken[]): AnnotatedToken[] {
+	// simplifyLocalGlosses is only applied to complete end-to-end deterministic `annotate`.
+	return tokens.map(token => {
+		let gloss = token.gloss;
+		if (token.text === '冇') gloss = 'no';
+		if (token.text === '佢' || token.text === '佢哋') gloss = 'they';
+		if (gloss?.includes('/')) gloss = gloss.split('/', 1)[0].trim();
+		return gloss === token.gloss ? token : { ...token, gloss };
+	});
+}
+
+/** Performs complete deterministic Cantonese annotation. */
 export async function annotate(text: string, options: YueAnnotateOptions = {}): Promise<AnnotatedToken[]> {
 	if (!text) return [];
 
@@ -34,6 +45,7 @@ export async function annotate(text: string, options: YueAnnotateOptions = {}): 
 	// Retokenization can expose dictionary words that were not lookup candidates
 	// before deterministic splitting, so fill remaining gaps once more.
 	tokens = applyYueSBWordsGlosses(tokens, yueSBWords);
+	tokens = simplifyLocalGlosses(tokens);
 	return spellTokens(tokens);
 }
 

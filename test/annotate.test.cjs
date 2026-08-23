@@ -36,6 +36,30 @@ test('annotates Cantonese locally with caller-supplied dictionary rows', async (
 	assert.equal(tokens.find(token => token.text === '。')?.gloss ?? null, null);
 });
 
+test('simplifies glosses only for end-to-end deterministic annotation', async () => {
+	const simplificationRows = [
+		{ ...localRows[0], id: 2, word: '冇', gloss: 'not have' },
+		{ ...localRows[0], id: 3, word: '佢', gloss: 'he/she/it' },
+		{ ...localRows[0], id: 4, word: '佢哋', gloss: 'they-PL' },
+		{ ...localRows[0], id: 5, word: '衫', gloss: 'shirt/clothes' },
+	];
+	const tokens = await annotate('冇 佢 佢哋 衫', { latestSBWords: simplificationRows });
+	assert.equal(tokens.find(token => token.text === '冇')?.gloss, 'no');
+	assert.equal(tokens.find(token => token.text === '佢')?.gloss, 'they');
+	assert.equal(tokens.find(token => token.text === '佢哋')?.gloss, 'they');
+	assert.equal(tokens.find(token => token.text === '衫')?.gloss, 'shirt');
+
+	const externalTokens = annotateCantoneseTokenGlosses([
+		{ token: '冇', gloss: 'not have', mtype: 'BASE' },
+		{ token: '佢', gloss: 'he', mtype: 'BASE' },
+		{ token: '佢哋', gloss: 'they-PL', mtype: 'BASE' },
+		{ token: '衫', gloss: 'shirt/clothes', mtype: 'BASE' },
+	], '冇佢佢哋衫');
+	assert.deepEqual(externalTokens.map(token => token.gloss), [
+		'not have', 'he', 'they-PL', 'shirt / clothes',
+	]);
+});
+
 test('tokenizeAndSpell does not require gloss data or a network', () => {
 	const tokens = tokenizeAndSpell('我');
 	assert.equal(tokens.map(token => token.text).join(''), '我');
