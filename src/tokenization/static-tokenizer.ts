@@ -154,6 +154,7 @@ export function tokenize(text:string):AnnotatedToken[] {
 
 	// BRUTE FORCE SPLITTING // Should technically be done after 'spelling' (since spelling is per-word right now, rather than using sentence-context), but this is easiest for now.
 	let brute_force_splits = {
+		"有機": ["有", "機"],
 		"食水": ["食", "水"],
 		"食肉": ["食", "肉"],
 		"冇嘢": ["冇", "嘢"],

@@ -42,21 +42,27 @@ test('simplifies glosses only for end-to-end deterministic annotation', async ()
 		{ ...localRows[0], id: 3, word: '佢', gloss: 'he/she/it' },
 		{ ...localRows[0], id: 4, word: '佢哋', gloss: 'they-PL' },
 		{ ...localRows[0], id: 5, word: '衫', gloss: 'shirt/clothes' },
+		{ ...localRows[0], id: 6, word: '都', gloss: 'also' },
+		{ ...localRows[0], id: 7, word: '好', gloss: 'very' },
 	];
-	const tokens = await annotate('冇 佢 佢哋 衫', { latestSBWords: simplificationRows });
+	const tokens = await annotate('冇 佢 佢哋 衫 都 好', { latestSBWords: simplificationRows });
 	assert.equal(tokens.find(token => token.text === '冇')?.gloss, 'no');
 	assert.equal(tokens.find(token => token.text === '佢')?.gloss, 'they');
 	assert.equal(tokens.find(token => token.text === '佢哋')?.gloss, 'they');
 	assert.equal(tokens.find(token => token.text === '衫')?.gloss, 'shirt');
+	assert.equal(tokens.find(token => token.text === '都')?.gloss, 'al(so)');
+	assert.equal(tokens.find(token => token.text === '好')?.gloss, '︽');
 
 	const externalTokens = annotateCantoneseTokenGlosses([
 		{ token: '冇', gloss: 'not have', mtype: 'BASE' },
 		{ token: '佢', gloss: 'he', mtype: 'BASE' },
 		{ token: '佢哋', gloss: 'they-PL', mtype: 'BASE' },
 		{ token: '衫', gloss: 'shirt/clothes', mtype: 'BASE' },
-	], '冇佢佢哋衫');
+		{ token: '都', gloss: 'also', mtype: 'BASE' },
+		{ token: '好', gloss: 'very', mtype: 'BASE' },
+	], '冇佢佢哋衫都好');
 	assert.deepEqual(externalTokens.map(token => token.gloss), [
-		'not have', 'he', 'they-PL', 'shirt / clothes',
+		'not have', 'he', 'they-PL', 'shirt / clothes', 'also', 'very',
 	]);
 });
 
@@ -68,6 +74,10 @@ test('tokenizeAndSpell does not require gloss data or a network', () => {
 
 test('owns the historical Yue regroup and context rules', () => {
 	assert.deepEqual(tokenizeAndSpell('好凍').map(token => token.text), ['好凍']);
+	assert.deepEqual(tokenizeAndSpell('有機').map(token => token.text), ['有', '機']);
+	for (const word of ['神通師', '馭水師', '卡塔拉', '折氣師', '阿霸', '索卡']) {
+		assert.deepEqual(tokenizeAndSpell(word).map(token => token.text), [word]);
+	}
 
 	const measure = annotateCantoneseTokenGlosses([
 		{ token: '度', gloss: 'degree', mtype: 'BASE' },
@@ -79,6 +89,20 @@ test('owns the historical Yue regroup and context rules', () => {
 		{ token: '度', gloss: 'degree', mtype: 'BASE' },
 	], '度');
 	assert.equal(location[0].gloss, 'location');
+
+	const pointOfView = annotateCantoneseTokenGlosses([
+		{ token: '對', gloss: 'towards', mtype: 'BASE' },
+		{ token: '我', gloss: 'me', mtype: 'BASE' },
+		{ token: '嚟講', gloss: 'speaking', mtype: 'BASE' },
+	], '對我嚟講');
+	assert.equal(pointOfView[0].gloss, 'to');
+
+	const nextLine = annotateCantoneseTokenGlosses([
+		{ token: '對', gloss: 'towards', mtype: 'BASE' },
+		{ token: '\n', gloss: '', mtype: 'N/A' },
+		{ token: '嚟講', gloss: 'speaking', mtype: 'BASE' },
+	], '對\n嚟講');
+	assert.equal(nextLine[0].gloss, 'towards');
 });
 
 test('bundled snapshot annotation stays offline in Node', async () => {

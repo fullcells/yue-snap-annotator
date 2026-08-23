@@ -616,7 +616,7 @@ export function annotateCantoneseTokenGlosses(initialTokens: CantoneseTokenGloss
 			if (tokenText == "等" && anyIn_ci(['wait'],gloss)) gloss="wait";
 			if (tokenText == "對") {
 				if (anyIn_ci(['pair'],gloss)) gloss="(pair)";
-				if ( nextLLMTokensOnCurLine.some(t => t.token === "嚟講")) gloss="treats"; // In "對A嚟講" pattern, it means "from A's POV"
+				if (nextLLMTokensOnCurLine.some(t => t.token === "嚟講")) gloss="to";
 
 			}
 			if (tokenText == "生" && anyIn_ci(['birth','lay'],gloss)) gloss="birth";

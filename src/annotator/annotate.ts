@@ -29,6 +29,8 @@ function simplifyLocalGlosses(tokens: AnnotatedToken[]): AnnotatedToken[] {
 		let gloss = token.gloss;
 		if (token.text === '冇') gloss = 'no';
 		if (token.text === '佢' || token.text === '佢哋') gloss = 'they';
+		if (token.text === '都') gloss = 'al(so)';
+		if (token.text === '好') gloss = '︽';
 		if (gloss?.includes('/')) gloss = gloss.split('/', 1)[0].trim();
 		return gloss === token.gloss ? token : { ...token, gloss };
 	});
