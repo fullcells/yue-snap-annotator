@@ -12,6 +12,10 @@ const tokens = await annotate("我鍾意貓。");
 
 Unknown word glosses remain absent, allowing callers to leave them unknown or provide their own fallback.
 
+Consumers that already have tokens and glosses from an external engine can import
+`yue-snap-annotator/deterministic` and `yue-snap-annotator/spelling`. These entry
+points do not load the bundled static-tokenizer trie.
+
 Runtime annotation requires no API or internet connection. The package ships with the historical local Cantonese trie and a bundled YueSBWords snapshot. Browser and Chrome-extension environments can periodically refresh that snapshot into IndexedDB while retaining local data when offline.
 
 ## Development

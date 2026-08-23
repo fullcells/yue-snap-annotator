@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const { spawnSync } = require('node:child_process');
 const test = require('node:test');
 const {
 	annotate,
@@ -17,6 +18,15 @@ const localRows = [{
 	created_at: '2026-01-01T00:00:00.000Z',
 	is_human_verified: true,
 }];
+
+test('lightweight treatment entry points do not load the static trie', () => {
+	const result = spawnSync(process.execPath, ['-e', `
+		require('yue-snap-annotator/deterministic');
+		require('yue-snap-annotator/spelling');
+		if (Object.keys(require.cache).some(path => path.includes('canto3db_codepoints_prefixtrie'))) process.exit(1);
+	`], { cwd: process.cwd() });
+	assert.equal(result.status, 0, result.stderr.toString());
+});
 
 test('annotates Cantonese locally with caller-supplied dictionary rows', async () => {
 	const tokens = await annotate('貓。', { latestSBWords: localRows });

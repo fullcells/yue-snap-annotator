@@ -11,6 +11,16 @@
       "types": "./types/index.d.ts",
       "require": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./deterministic": {
+      "types": "./types/deterministic.d.ts",
+      "require": "./dist/treatments/deterministic.js",
+      "default": "./dist/treatments/deterministic.js"
+    },
+    "./spelling": {
+      "types": "./types/spelling.d.ts",
+      "require": "./dist/spelling/spelling.js",
+      "default": "./dist/spelling/spelling.js"
     }
   },
   "files": [
