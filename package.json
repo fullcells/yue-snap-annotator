@@ -33,7 +33,7 @@
   ],
   "scripts": {
     "snapshot:update": "node --env-file-if-exists=.env scripts/export-yue-sb-words.mjs",
-    "snapshot:update:if-configured": "node scripts/export-yue-sb-words.mjs --if-configured",
+    "snapshot:update:if-configured": "node --env-file-if-exists=.env scripts/export-yue-sb-words.mjs --if-configured",
     "prebuild": "npm run snapshot:update:if-configured",
     "build": "tsc -p tsconfig.json",
     "prepare": "npm run build",
