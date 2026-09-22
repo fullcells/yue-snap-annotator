@@ -36,6 +36,19 @@ test('annotates Cantonese locally with caller-supplied dictionary rows', async (
 	assert.equal(tokens.find(token => token.text === '。')?.gloss ?? null, null);
 });
 
+test('preserves a specific words2 gloss for a single known Yue word', async () => {
+	const rows = [{
+		...localRows[0],
+		id: 2,
+		word: '樣',
+		gloss: 'kind-of / appearance',
+	}];
+	const tokens = await annotate('樣', { latestSBWords: rows });
+	assert.equal(tokens.length, 1);
+	assert.equal(tokens[0].gloss, 'kind-of / appearance');
+	assert.deepEqual(tokens[0].phoneticToken, [['樣', 'joeng6']]);
+});
+
 test('simplifies glosses only for end-to-end deterministic annotation', async () => {
 	const simplificationRows = [
 		{ ...localRows[0], id: 2, word: '冇', gloss: 'not have' },

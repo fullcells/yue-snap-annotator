@@ -48,6 +48,16 @@ export async function annotate(text: string, options: YueAnnotateOptions = {}): 
 	// before deterministic splitting, so fill remaining gaps once more.
 	tokens = applyYueSBWordsGlosses(tokens, yueSBWords);
 	tokens = simplifyLocalGlosses(tokens);
+	// A whole-text dictionary word follows Lingoprocessor's single-word path:
+	// the specific words2 gloss is authoritative and should not be shortened by
+	// generic deterministic cleanup or slash simplification.
+	if (tokens.length === 1 && tokens[0].isWord && tokens[0].text === text) {
+		const dictionaryToken = applyYueSBWordsGlosses(
+			[{ ...tokens[0], gloss: null }],
+			yueSBWords,
+		)[0];
+		if (dictionaryToken.gloss) tokens = [dictionaryToken];
+	}
 	return spellTokens(tokens);
 }
 
