@@ -48,6 +48,7 @@ export function spellTokens(_tokens:AnnotatedToken[]):AnnotatedToken[] {
 			if (token.text=="正" && anyIn_ci("pure/genuine/good/awe/accurate/precise/exact".split('/'),token.gloss)) jyutpingArray = [["正","zeng3"]];
 			if (token.text=="訂" && anyIn_ci("order/subscribe/book/reserve".split('/'),token.gloss)) jyutpingArray = [["訂","deng6"]];
 			if (token.text=="定" && anyIn_ci("order/book/subscribe/deposit/down/pay".split('/'),token.gloss)) jyutpingArray = [["定","deng6"]];
+			if (token.text=="長" && anyIn_ci(["grow"],token.gloss)) jyutpingArray = [["長","zoeng2"]];
 			// . End Brute Force SingleWord ToJyutping Corrections
 
 			// Format phonetics: (new tuple-based type first; deprecated object type is derived from it - 20260630).

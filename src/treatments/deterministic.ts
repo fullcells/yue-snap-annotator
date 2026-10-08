@@ -20,6 +20,7 @@ export function annotateCantoneseTokenGlosses(initialTokens: CantoneseTokenGloss
 	let yueSingleTokenRewrites = {
 		// - Cantonese-specific words - its occasionally struggles with this
 		"三文治":"sandwich",
+		"蛋黃醬":"mayonnaise",
 		"紅蘿蔔":"carrot",
 		// - it struggled initially with keeping words together (like 媽媽，爸爸)
 		"男人":"man",
@@ -86,6 +87,7 @@ export function annotateCantoneseTokenGlosses(initialTokens: CantoneseTokenGloss
 		"呢個":"this",
 		"而":"also", // ~
 		"返學":"go to school",
+		"返工":"go work",
 		// -
 		"香蕉":"banana",
 		"洗手間":"restroom",
@@ -171,6 +173,7 @@ export function annotateCantoneseTokenGlosses(initialTokens: CantoneseTokenGloss
 		"老":"old (age)",
 		"女仔":"girl",
 		"朝早":"morning",
+		"日頭":"daytime",
 		"桌上遊戲":"board game",
 		"BB":"baby",
 		"星期未":"weekend",
@@ -201,7 +204,9 @@ export function annotateCantoneseTokenGlosses(initialTokens: CantoneseTokenGloss
 		'人哋':`people`,
 		'對唔住':`sorry`,
 		'地上':`ground`,
+		'左':`left`,
 		'通常':`usually`,
+		'通常都':`generally`,
 	}
 
 	// 2.1 BRUTE TOKEN RE-MERGES/RE-GROUPS
