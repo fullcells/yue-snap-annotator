@@ -78,7 +78,7 @@ export function annotateCantoneseTokenGlosses(initialTokens: CantoneseTokenGloss
 		// "每個":"each", // splitting instead
 		"佢哋":"they-PL", // or: they-PL uses 'GLOSS-ABBRV' which would make it an exception / 'they all' too long when part of 佢哋嘅
 		// "啲":"some", // x. "some" was too overly prescriptive/aggressive.
-		"咪":"not is",
+		// "咪":"not is", // Preserve the contextual gloss: this may be a prohibition or a copular contraction.
 		"差人":"police officer",
 		"貼":"stick",
 		"檸檬水":"lemonade",
@@ -212,7 +212,8 @@ export function annotateCantoneseTokenGlosses(initialTokens: CantoneseTokenGloss
 	// 2.1 BRUTE TOKEN RE-MERGES/RE-GROUPS
 	let bruteTokenRemerges = {}
 	// - YUE SINGLE-TOKEN REWRITES: (used to MERGE Tokens in bruteTokenMerges, and REWRITE-GLOSS of LLM Tokens) (Not used in Splitting Tokens)
-	Object.assign(bruteTokenRemerges, Object.fromEntries(Object.entries(yueSingleTokenRewrites).filter(([k]) => k.length > 1).map(([k,v]) => [k, {gloss:v, mtype:"BASE"}])));
+	// Preserve independently glossed comparative morphemes rather than merging 早 + 啲 back together.
+	Object.assign(bruteTokenRemerges, Object.fromEntries(Object.entries(yueSingleTokenRewrites).filter(([k]) => k.length > 1 && k !== '早啲').map(([k,v]) => [k, {gloss:v, mtype:"BASE"}])));
 	// + Conditional Additions:
 	if (["你好。", "你好」"].some(t=>text.toLowerCase().includes(t))) {
 		bruteTokenRemerges["你好"] = {gloss:"\"Greetings\"",mtype:"BASE"};
@@ -379,18 +380,18 @@ export function annotateCantoneseTokenGlosses(initialTokens: CantoneseTokenGloss
 			if (tokenText in yueSingleTokenRewrites) gloss = yueSingleTokenRewrites[tokenText];
 
 			// 佢
-			if (tokenText == "佢") { // Example LLM Results: "he/him/his", "he/she/they", "s/he", "he/she/it"
+			if (tokenText == "佢" && gloss) { // Example LLM Results: "he/him/his", "he/she/they", "s/he", "he/she/it"
 				// Exact match
-				const exactMatch:boolean = ["he","she","it","her","his"].some(g => gloss?.toLowerCase() == g);
+				const exactMatch:boolean = ["he","him","his","she","her","hers","it","its","they","them","their"].some(g => gloss?.toLowerCase() == g);
 				// Single-Gender Check
 				const parts = gloss?.toLowerCase().split("/").map(p => p.trim());
 				const allMale   = parts.every(p => ["he","him","his"].includes(p));
 				const allFemale = parts.every(p => ["she","her","hers"].includes(p));
 				// Set
 				if (!exactMatch) {
-					if (allMale) gloss = "he/him/his";
-					if (allFemale) gloss = "she/her/hers";
-					if (!allMale && !allFemale) gloss = "he/she/it"; // Default
+					if (allMale) gloss = parts[0];
+					if (allFemale) gloss = parts[0];
+					if (!allMale && !allFemale) gloss = "they"; // Default: a single neutral gloss, without introducing gender alternatives.
 				}
 			}
 			// 色
@@ -425,8 +426,8 @@ export function annotateCantoneseTokenGlosses(initialTokens: CantoneseTokenGloss
 			}
 			if (tokenText == "種" && anyIn_ci(["kind","type","sort","class","item"], gloss)) gloss="type of"; // zung // more specific/scientific
 			// - aspect
-			if (tokenText == "住" && anyIn_ci(["ing","cont","mark"], gloss)) gloss="-ing";
-			if (tokenText == "住" && anyIn_ci(["live","stay","at"], gloss)) gloss="reside";
+			if (tokenText == "住" && /\b(?:ing|continuous|continuative|progressive|continuing|ongoing)\b/i.test(gloss ?? '') && !/\b(?:yet|for now|delay|temporary|temporarily)\b/i.test(gloss ?? '')) gloss="-ing";
+			if (tokenText == "住" && /\b(?:live|lives|living|reside|resides|residing|stay|stays|staying)\b/i.test(gloss ?? '')) gloss="reside";
 			if (tokenText == "緊" && anyIn_ci(["ing","ongo","process","aspect","mark"], gloss)) gloss="-ing";
 			// - classifier
 			if (tokenText == "隻" && anyIn_ci(["cl","animal","eye","hand","dog","("], gloss)) gloss="(a)";
@@ -445,7 +446,8 @@ export function annotateCantoneseTokenGlosses(initialTokens: CantoneseTokenGloss
 			// ---
 			if (tokenText == "配" && anyIn_ci(["pair","match","with","assign"], gloss)) gloss="goes with";
 			if (tokenText == "邊個") {
-				if (gloss?.toLowerCase() === "whose") { gloss="whose"; } else {
+				if (anyIn_ci(["which"], gloss)) { gloss="which"; }
+				else if (gloss?.toLowerCase() === "whose") { gloss="whose"; } else {
 					if (anyIn_ci(["person"], gloss)) gloss="who";
 					if (gloss?.toLowerCase() === "who") gloss="who";
 				}
@@ -531,11 +533,13 @@ export function annotateCantoneseTokenGlosses(initialTokens: CantoneseTokenGloss
 			if (tokenText == "彈" && anyIn_ci(["play","music","instrument"], gloss)) gloss="strum";
 			if (tokenText == "班") {
 				if (anyIn_ci(["(","cl"], gloss)) {
-					if (anyIn_ci(["bus","flight","train","schedule","run"], gloss)) {
+					const scheduledSense = /\b(?:bus(?:es)?|flights?|trains?|scheduled?|runs?|services?|vehicles?|departures?)\b/i.test(gloss ?? '')
+						|| /^(?:車|巴士|火車|列車|飛機|航班|班機)$/.test(nextLLMToken?.token ?? '');
+					if (scheduledSense) {
 						gloss="(scheduled)";
-					} else if (anyIn_ci(["class"], gloss) || anyIn_ci(["student"],nextLLMToken?.gloss)) {
+					} else if (/\bclass(?:es)?\b/i.test(gloss ?? '') || anyIn_ci(["student"],nextLLMToken?.gloss)) {
 						gloss="(class)";
-					} else { gloss="(squad)"; } // "group"
+					} else if (/\b(?:squads?|teams?|groups?)\b/i.test(gloss ?? '')) { gloss="(squad)"; } // "group"
 				}
 			}
 			if (tokenText == "搭" && anyIn_ci(["take","vehicle","ride",'transit','transport','travel'],gloss)) gloss="ride";
@@ -580,7 +584,7 @@ export function annotateCantoneseTokenGlosses(initialTokens: CantoneseTokenGloss
 				}
 			}
 			if (tokenText == "釣" && anyIn_ci(['fish'],gloss)) gloss="to fish";
-			if (tokenText == "將" && anyIn_ci(['take','will'],gloss)) gloss="about to:";
+			// 將 can mark disposal or futurity; preserve the provided contextual gloss instead of turning take into a prediction.
 			if (tokenText == "搞" && anyIn_ci(['hold'],gloss)) gloss="organize";
 			if (tokenText == "啦") {
 				if (anyIn_ci(['(','fp'],gloss)) gloss="。";
@@ -631,10 +635,11 @@ export function annotateCantoneseTokenGlosses(initialTokens: CantoneseTokenGloss
 			if (tokenText == "走" && anyIn_ci(['leave'],gloss)) gloss="leave";
 
 			if (tokenText == "嚟") { // LLM isn't sufficient
-				if (anyIn_ci(['in order', 'to'],gloss)) gloss="in order to";
-				if (anyIn_ci(['arrive', 'become'],gloss)) gloss="come";
-				if (anyIn_ci(['from'],gloss)) gloss="come from";
-				if (text.includes('由')) gloss='come from'; // <- more precisely should be if [由,…,嚟] // } else if (!nextLLMToken?.gloss) { gloss="(become)"; } // <- not sure if this is the most appropriate gloss as a [final particle] but its a good placeholder
+				if (/\bin order to\b|^(?:to|for)$|\bpurpose\b/i.test(gloss ?? '')) gloss="in order to";
+				if (/\b(?:arrive|become)\b|^come to$/i.test(gloss ?? '')) gloss="come";
+				if (/\bfrom\b/i.test(gloss ?? '')) gloss="come from";
+				// Do not let a source phrase change every subsequent movement/purpose 嚟 in the text.
+				// if (text.includes('由')) gloss='come from'; // <- more precisely should be if [由,…,嚟] // } else if (!nextLLMToken?.gloss) { gloss="(become)"; } // <- not sure if this is the most appropriate gloss as a [final particle] but its a good placeholder
 			}
 
 			if (tokenText == "畫" && anyIn_ci(['drawing','painting'],gloss)) gloss="picture";
@@ -664,7 +669,8 @@ export function annotateCantoneseTokenGlosses(initialTokens: CantoneseTokenGloss
 			const trimmed = gloss.replace(/\(s\)\s*$/, "").trim();
 			if (trimmed !== "") gloss = trimmed;
 			// "….…"
-			gloss = gloss.replaceAll("."," ");
+			// Keep decimal points between Unicode digits; other formatting periods retain the previous cleanup.
+			gloss = gloss.replace(/(?<!\p{N})\.|\.(?!\p{N})/gu, " ");
 			gloss = gloss.replace(/-\)$/,")");
 			gloss = gloss.replace(/\(noun\)$/,")");
 			gloss = gloss.replace(/\(n\s*\)$/,")");
@@ -676,6 +682,8 @@ export function annotateCantoneseTokenGlosses(initialTokens: CantoneseTokenGloss
 		}
 
 		// iii. OUTPUT
+		// Non-morphemes must not acquire a gloss through the rules above.
+		if (t.mtype === 'N/A') gloss = null;
 		let outputToken:AnnotatedToken = {
 			text: tokenText,
 			isWord: t.mtype !== 'N/A' ? 1 : 0,
