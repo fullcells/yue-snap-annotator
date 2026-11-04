@@ -16,6 +16,12 @@ Consumers that already have tokens and glosses from an external engine can impor
 `yue-snap-annotator/deterministic` and `yue-snap-annotator/spelling`. These entry
 points do not load the bundled static-tokenizer trie.
 
+Negation treatment recognizes common `唔好 + action` prohibitions
+and `verb + 唔到` inability constructions, and fills missing `未` glosses before
+recognized actions with `not yet`. It uses adjacent tokens and a bounded
+action vocabulary, preserving lexical expressions such as `唔好意思` and leaving
+ambiguous bare `唔好食` unchanged. Unknown constructions retain their input gloss.
+
 Runtime annotation requires no API or internet connection. The package ships with the historical local Cantonese trie and a bundled YueSBWords snapshot. Browser and Chrome-extension environments can periodically refresh that snapshot into IndexedDB while retaining local data when offline.
 
 ## Development

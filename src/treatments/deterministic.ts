@@ -1,5 +1,6 @@
 import type { AnnotatedToken } from '../types';
 import { ilike, anyIn_ci } from '../utils/string';
+import { applyNegationConstructions } from './negation';
 
 export type CantoneseTokenGloss = {
 	token: string;
@@ -358,6 +359,7 @@ export function annotateCantoneseTokenGlosses(initialTokens: CantoneseTokenGloss
 	}
 
 	tokens = applyTokenSplits(tokens, bruteTokenSplits);
+	tokens = applyNegationConstructions(tokens);
 
 	// 2.3 PROCESS EACH LLM-TOKEN TO ANNOTATED-TOKEN
 	const annotatedTokens: AnnotatedToken[] = [];
@@ -630,7 +632,7 @@ export function annotateCantoneseTokenGlosses(initialTokens: CantoneseTokenGloss
 			}
 			if (tokenText == "生" && anyIn_ci(['birth','lay'],gloss)) gloss="birth";
 			if (tokenText == "做" && anyIn_ci(['do'],gloss)) gloss="do";
-			if (tokenText == "做" && ['BECOME', 'BE', 'AS'].includes(gloss.toUpperCase())) gloss="be";
+			if (tokenText == "做" && ['BECOME', 'BE', 'AS'].includes((gloss ?? '').toUpperCase())) gloss="be";
 			if (tokenText == "啦" && !nextLLMToken?.gloss) gloss="。";
 			if (tokenText == "走" && anyIn_ci(['leave'],gloss)) gloss="leave";
 
